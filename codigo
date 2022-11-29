@@ -1,0 +1,208 @@
+//***********************SENOR INFRA ROJOS********************************
+#define IRDelanteI 36
+#define IRDelanteD 35
+#define IRDetras 34
+int datosDelanteD;
+int datosDelanteI;
+int datosDetras;
+int NEGRODELANTE = 1200;                     //valor del color blanco del tatami
+int NEGRODETRAS = 1400;
+
+//***********************SENOR ULTRA SONIDOS******************************
+#define trigPin 2                   //pin de sensor ultra sonidos TRIG
+#define echoPin 4                   //pin de sensor ultra sonidos ECHO
+#define VELOCIDAD_DEL_SONIDO 0.034  //velocidad del sonido
+
+long duracion;                      //variable de la duración entre emitir y recibir
+float distancia;                    //el calculo final de la distancia
+
+//*****************************MOTORES************************************
+#define vDer 22   //ENB
+#define vIz 23    //ENA
+#define delDer 26 //IN3
+#define delIz 25  //IN2
+#define detDer 33 //IN4
+#define detIz 32  //IN1
+
+//*****************************ARDUINO************************************
+#define led LED_BUILTIN
+#define segundos 13
+int tiempoCentro = 800;
+int tiempo90grados = 250;
+int tiempo180grados = 500;
+int cortoPeriodo = 300;
+int RAPIDO = 255;
+int LENTO = 125;
+int QUIETO = 0;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//***************************VOID SETUP***********************************
+void setup() {
+//***********************SENOR ULTRA SONIDOS******************************
+  pinMode(trigPin,      OUTPUT);           //pin trig como salida
+  pinMode(echoPin,      INPUT);            //pin echo como entrada
+  digitalWrite(trigPin, LOW);              //trigPin que empiece en off
+
+//*****************************MOTORES************************************
+  pinMode(vDer,   OUTPUT);
+  pinMode(vIz,    OUTPUT);
+  pinMode(delDer, OUTPUT);
+  pinMode(delIz,  OUTPUT);
+  pinMode(detDer, OUTPUT);
+  pinMode(detIz,  OUTPUT);
+
+//****************************ARDUINO*************************************
+  pinMode(led, OUTPUT);                 //led integrado de prueba
+  pinMode(segundos, INPUT);             //boton de delay de 5 segundos
+  delay(5000);
+  Serial.println(digitalRead(segundos));
+  while(digitalRead(segundos) == HIGH){ //mientras se pulsa el botón que no haga nada
+  Serial.println("parao");
+  }
+  delay(5000);                          //y una vez se suelte haga el delay de 5 segundos
+  Serial.println("lets gooooo");
+  
+  centro();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//***************************VOID LOOP************************************
+void loop() {
+ 
+  ultrasonidos();
+  infrarojos();
+
+    if(distancia < 120){           //si ve un enemigo de frente
+                                   //que vaya a saco paco
+      avanzar();                   
+      analogWrite(vDer,RAPIDO);
+      analogWrite(vIz,RAPIDO);   
+      Serial.println("juntos");
+      infrarojos();
+    }
+      
+        else if (datosDetras > NEGRODETRAS){ //si el enemigo le empuja y esta apunto de salirse desde atras        
+                                             //que gire unos 90 grados
+        giroIz();                            
+        analogWrite(vDer,    RAPIDO);
+        analogWrite(vIz,     RAPIDO);      
+        delay(tiempo90grados);         
+        Serial.println("juntos el enemigo nos empuja");             
+      }
+    
+    else{
+      
+      Serial.println("solos");
+      ultrasonidos();
+      infrarojos();
+      
+      giroIz();                               //que detecte dando vueltas sobre si mismo
+      analogWrite(vDer,RAPIDO);
+      analogWrite(vIz,RAPIDO);
+      if(digitalRead(segundos) == HIGH){
+        quieto();
+        while(digitalRead(segundos) == HIGH){ //mientras se pulsa el botón que no haga nada
+        Serial.println("parao");
+        }
+        delay(5000);
+      }
+      
+      
+      if (datosDelanteD > NEGRODELANTE || datosDelanteI > NEGRODELANTE){  //si detecta blanco por delante
+        
+        giroIz();                     //que se de media vuelta (hacia la izquierda) y tire un poco palante
+        analogWrite(vDer,    RAPIDO);
+        analogWrite(vIz,     RAPIDO);
+        delay(tiempo180grados);               
+        centro();
+        Serial.println("solos nos salimos por delante");           
+      }
+      
+      else if (datosDetras > NEGRODETRAS){ //si detecta detras blanco     
+        avanzar();                         //que corra por su vida
+        
+        analogWrite(vDer,    RAPIDO);
+        analogWrite(vIz,     RAPIDO);
+        delay(cortoPeriodo);        
+        Serial.println("solos nos salimos por detras"); 
+        }
+        
+      }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+}
+
+//***********************SENOR ULTRA SONIDOS******************************
+void ultrasonidos(){
+  digitalWrite(trigPin, HIGH);                    //activa el sensor
+  delayMicroseconds(10);                          //se queda activo por 10 micro segundos
+  digitalWrite(trigPin, LOW);                     //desactiva el sensor              
+  duracion = pulseIn(echoPin, HIGH);              //lee el pin echo y transforma las ondas en distancia
+  if (duracion >= 130000){                        //si duración dá error:
+  }
+  else{
+    digitalWrite(led, LOW);                           //que apague el led indicando que todo va bien
+    distancia = duracion * VELOCIDAD_DEL_SONIDO/2;    //calcula la distancia
+    Serial.print("distancia en cm: ");                //imprime el resultado
+    Serial.println(distancia);
+  }
+}
+//***********************SENOR INFRA ROJOS********************************
+void infrarojos(){
+  datosDelanteD=analogRead(IRDelanteD); //guarda la lectura en la variable  
+  datosDelanteI=analogRead(IRDelanteI); //guarda la lectura en la variable  
+  datosDetras=analogRead(IRDetras);   //guarda la lectura en la variable
+}
+
+void avanzar(){
+  digitalWrite(delDer, HIGH);
+  digitalWrite(detDer, LOW);
+  digitalWrite(delIz,  HIGH);
+  digitalWrite(detIz,  LOW);
+}
+void retroceder(){
+  digitalWrite(delDer, LOW);
+  digitalWrite(detDer, HIGH);
+  digitalWrite(delIz,  LOW);
+  digitalWrite(detIz,  HIGH);
+}
+void giroDer(){
+  digitalWrite(delDer, LOW);
+  digitalWrite(detDer, HIGH);
+  digitalWrite(delIz,  HIGH);
+  digitalWrite(detIz,  LOW);
+}
+void giroIz(){
+  digitalWrite(delDer, HIGH);
+  digitalWrite(detDer, LOW);
+  digitalWrite(delIz,  LOW);
+  digitalWrite(detIz,  HIGH);
+}
+void quieto(){
+  digitalWrite(delDer, LOW);
+  digitalWrite(detDer, LOW);
+  digitalWrite(delIz,  LOW);
+  digitalWrite(detIz,  LOW);
+
+  analogWrite(vDer,    QUIETO);
+  analogWrite(vIz,     QUIETO);
+}
+void centro(){
+  digitalWrite(delDer, HIGH);
+  digitalWrite(detDer, LOW);
+  digitalWrite(delIz,  HIGH);
+  digitalWrite(detIz,  LOW);
+
+  analogWrite(vDer,    RAPIDO);
+  analogWrite(vIz,     RAPIDO);
+  delay(tiempoCentro);       //el delay se usará ya que el programa ignorará todos los sensores
+                             //y el delay no afectará al funcionamiento del robot.
+}
