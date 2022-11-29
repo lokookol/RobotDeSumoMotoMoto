@@ -1,0 +1,144 @@
+#include "BluetoothSerial.h"        //incluye la libreria bluetooth
+String mensaje = "";                //donde se va a guardar lo que se escriba o lo que se reciba
+BluetoothSerial bluetooth_serial;   //creamos una variable que servirá de base para nuestro código
+
+#define RAPIDO 255
+#define LENTO 125
+#define QUIETO LOW
+
+#define cc 125
+#define noventa 250
+#define ctc 375
+
+
+#define vDer 22   //ENB
+#define vIz 23    //ENA
+#define delDer 26 //IN3
+#define delIz 25  //IN2
+#define detDer 33 //IN4
+#define detIz 32  //IN1
+
+void setup() {
+  Serial.begin(115200);               //velocidad recomendada para el ESP32 para el serial
+  Serial.setTimeout(10);              //determina el tiempo que se queda esperando para otra respuesta del serial
+                                      //está puesto ahora a 10 milisegundos
+  bluetooth_serial.begin("MotoMoto"); //El nombre que le querramos dar al dispositivo
+
+  pinMode(vDer,   OUTPUT);
+  pinMode(vIz,    OUTPUT);
+  pinMode(delDer, OUTPUT);
+  pinMode(delIz,  OUTPUT);
+  pinMode(detDer, OUTPUT);
+  pinMode(detIz,  OUTPUT);
+}
+
+void loop() {
+  bluetooth();
+}
+void bluetooth(){         //PENDIENTE AÑADIR BOTON DE PARAR
+  if (bluetooth_serial.available()) { //si envían información desde el dispositivo... (recibir) 
+    
+    String caracter_recibido = bluetooth_serial.readStringUntil('\n'); //lee la string hasta que haya un enter
+      mensaje = caracter_recibido ; //que añada a la variable mensaje, la palabra recibida
+      
+    if(mensaje == "1"){             //si el mensaje recibido es 1 ARRIBA IZQUIERDA
+      digitalWrite(delDer, LOW);   
+      digitalWrite(detDer, HIGH);
+      digitalWrite(delIz,  HIGH);
+      digitalWrite(detIz,  LOW);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+      delay(cc);
+      quieto();
+      
+    }
+    else if (mensaje == "2"){       //ARRIBA
+      digitalWrite(delDer, HIGH);
+      digitalWrite(detDer, LOW);
+      digitalWrite(delIz,  HIGH);
+      digitalWrite(detIz,  LOW);
+      
+      analogWrite(vDer,    LENTO);
+      analogWrite(vIz,     LENTO);
+    }
+    else if (mensaje == "3"){       //ARRIBA DERECHA
+      digitalWrite(delDer, HIGH);
+      digitalWrite(detDer, LOW);
+      digitalWrite(delIz,  LOW);
+      digitalWrite(detIz,  HIGH);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+      delay(cc);
+      quieto();
+    }
+    else if (mensaje == "4"){       //IZQUIERDA
+      digitalWrite(delDer, LOW);
+      digitalWrite(detDer, HIGH);
+      digitalWrite(delIz,  HIGH);
+      digitalWrite(detIz,  LOW);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+      delay(noventa);
+      quieto();
+    }
+    else if (mensaje == "5"){       //DERECHA
+      digitalWrite(delDer, HIGH);
+      digitalWrite(detDer, LOW);
+      digitalWrite(delIz,  LOW);
+      digitalWrite(detIz,  HIGH);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+      delay(noventa);
+      quieto();
+    }
+    else if (mensaje == "6"){       //ABAJO IZQUIERDA
+      digitalWrite(delDer, LOW);
+      digitalWrite(detDer, HIGH);
+      digitalWrite(delIz,  HIGH);
+      digitalWrite(detIz,  LOW);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+
+      delay(ctc);
+      quieto();
+    }
+    else if (mensaje == "7"){       //ABAJO
+      digitalWrite(delDer, LOW);
+      digitalWrite(detDer, HIGH);
+      digitalWrite(delIz,  LOW);
+      digitalWrite(detIz,  HIGH);
+      
+      analogWrite(vDer,    LENTO);
+      analogWrite(vIz,     LENTO);
+    }
+    else if (mensaje == "8"){       //ABAJO DERECHA
+      digitalWrite(delDer, HIGH);
+      digitalWrite(detDer, LOW);
+      digitalWrite(delIz,  LOW);
+      digitalWrite(detIz,  HIGH);
+      
+      analogWrite(vDer,    RAPIDO);
+      analogWrite(vIz,     RAPIDO);
+      delay(ctc);
+      quieto();
+    }
+    else if (mensaje == "9"){
+      quieto();
+    }
+  }
+}
+
+void quieto(){
+  digitalWrite(delDer, LOW);
+      digitalWrite(detDer, LOW);
+      digitalWrite(delIz,  LOW);
+      digitalWrite(detIz,  LOW);
+      
+      analogWrite(vDer,    QUIETO);
+      analogWrite(vIz,     QUIETO);
+}
